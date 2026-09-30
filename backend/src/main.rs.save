@@ -1,0 +1,98 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+mod api;
+mod config;
+mod db;
+mod indexer;
+mod labels;
+mod models;
+mod rpc;
+mod tracing;
+
+use anyhow::Result;
+use axum::{Router, routing::get};
+use std::net::SocketAddr;
+
+use api::addresses::get_address;
+use api::blocks::get_block;
+use api::investigations::get_investigation;
+use api::logs::get_logs;
+use api::transactions::{TransactionApiState, get_transaction_handler};
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let config = config::Config::from_env()?;
+    let _pool = db::initialize(&config).await?;
+
+    let rpc = rpc::RpcClient::new(config.rpc_url.clone());
+    let latest_block = rpc.block_number().await?;
+    println!("Latest Ethereum block: {}", latest_block);
+
+    let app = Router::new()
+        .route("/", get(root))
+        .route("/health", get(health))
+        .route("/api/v1/addresses/{address}", get(get_address))
+        .route("/api/v1/transactions/{hash}", get(get_transaction_handler))
+        .route("/api/v1/investigations/{id}", get(get_investigation))
+        .route("/api/v1/blocks/{block_number}", get(get_block))
+        .route("/api/v1/transactions/{hash}/logs", get(get_logs));
+
+    let address = SocketAddr::from((config.host, config.port));
+
+    println!("=================================");
+    println!("          InDexAI Backend");
+    println!("=================================");
+    println!("Server: http://{}", address);
+    println!("Health: http://{}/health", address);
+    println!();
+
+    let listener = tokio::net::TcpListener::bind(address).await?;
+    axum::serve(listener, app).await?;
+
+    Ok(())
+}
+
+async fn root() -> &'static str {
+    "InDexAI Blockchain Investigation API"
+}
+
+async fn health() -> &'static str {
+    "OK"
+}

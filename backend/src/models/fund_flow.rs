@@ -10,17 +10,18 @@ pub struct FundFlowNode {
 pub struct FundFlowEdge {
     pub from: String,
     pub to: String,
-    pub token_address: String,
+    pub token_address: Option<String>,
     pub symbol: String,
     pub decimals: u8,
     pub amount: String,
     pub human_amount: String,
-    pub log_index: u64,
+    pub log_index: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct FundFlow {
     pub transaction_hash: String,
+    pub transaction_from: String,
     pub nodes: Vec<FundFlowNode>,
     pub edges: Vec<FundFlowEdge>,
 }

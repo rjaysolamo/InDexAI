@@ -91,13 +91,65 @@ pub async fn build_fund_flow(
 ) -> Result<FundFlow> {
     let mut nodes = Vec::new();
     let mut edges = Vec::new();
+    let mut metadata_cache: std::collections::HashMap<String, (String, u8)> =
+        std::collections::HashMap::new();
+
+    let transaction = rpc
+        .call("eth_getTransactionByHash", json!([tx_hash]))
+        .await?;
+
+    let transaction_from = transaction
+        .get("from")
+        .and_then(Value::as_str)
+        .context("transaction sender missing")?
+        .to_string();
+
+    let transaction_to = transaction
+        .get("to")
+        .and_then(Value::as_str)
+        .map(str::to_string);
+
+    let transaction_value = transaction
+        .get("value")
+        .and_then(Value::as_str)
+        .context("transaction value missing")?;
+
+    let transaction_value_decimal = hex_to_decimal(transaction_value)?;
+
+    if transaction_value_decimal != "0" {
+        if let Some(to_address) = &transaction_to {
+            add_node(&mut nodes, &transaction_from).await?;
+            add_node(&mut nodes, to_address).await?;
+
+            edges.push(FundFlowEdge {
+                from: transaction_from.clone(),
+                to: to_address.clone(),
+                token_address: None,
+                symbol: "ETH".to_string(),
+                decimals: 18,
+                amount: transaction_value_decimal.clone(),
+                human_amount: format_amount(&transaction_value_decimal, 18)?,
+                log_index: None,
+            });
+        }
+    }
 
     for transfer in transfers {
         add_node(&mut nodes, &transfer.from_address).await?;
-
         add_node(&mut nodes, &transfer.to_address).await?;
 
-        let (symbol, decimals) = get_token_metadata(rpc, &transfer.token_address).await?;
+        let (symbol, decimals) = if let Some(metadata) = metadata_cache.get(&transfer.token_address)
+        {
+            metadata.clone()
+        } else {
+            let metadata = match get_token_metadata(rpc, &transfer.token_address).await {
+                Ok(metadata) => metadata,
+                Err(_) => ("UNKNOWN".to_string(), 0),
+            };
+
+            metadata_cache.insert(transfer.token_address.clone(), metadata.clone());
+            metadata
+        };
 
         let decimal_amount = hex_to_decimal(&transfer.amount)?;
         let human_amount = format_amount(&decimal_amount, decimals)?;
@@ -105,17 +157,18 @@ pub async fn build_fund_flow(
         edges.push(FundFlowEdge {
             from: transfer.from_address.clone(),
             to: transfer.to_address.clone(),
-            token_address: transfer.token_address.clone(),
+            token_address: Some(transfer.token_address.clone()),
             symbol,
             decimals,
-            amount: transfer.amount.clone(),
+            amount: decimal_amount,
             human_amount,
-            log_index: transfer.log_index,
+            log_index: Some(transfer.log_index),
         });
     }
 
     Ok(FundFlow {
         transaction_hash: tx_hash.to_string(),
+        transaction_from: transaction_from.clone(),
         nodes,
         edges,
     })

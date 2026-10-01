@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+html {
+  background: white;
+}
+
+body {
+  margin: 0;
+  background: white;
+  color: #111827;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+code,
+.font-mono {
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}

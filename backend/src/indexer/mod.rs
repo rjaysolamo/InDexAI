@@ -1,3 +1,4 @@
+pub mod address_transactions;
 pub mod blocks;
 pub mod erc20;
 pub mod logs;

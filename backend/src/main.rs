@@ -16,6 +16,7 @@ use axum::{
 use serde::Serialize;
 use std::net::SocketAddr;
 
+use api::address_transactions::get_address_transactions_handler;
 use api::addresses::get_address;
 use api::blocks::get_block;
 use api::investigations::get_investigation;
@@ -68,6 +69,10 @@ async fn main() -> Result<()> {
     let app: Router = Router::new()
         .route("/", get(root))
         .route("/health", get(health))
+        .route(
+            "/api/v1/addresses/{address}/transactions",
+            get(get_address_transactions_handler),
+        )
         .route("/api/v1/addresses/{address}", get(get_address))
         .route("/api/v1/transactions/{hash}", get(get_transaction_handler))
         .route("/api/v1/investigations/{id}", get(get_investigation))

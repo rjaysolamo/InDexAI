@@ -1,3 +1,4 @@
+import type { Chain } from "@/lib/chains";
 import ServiceHealth from "@/components/ServiceHealth";
 import Link from "next/link";
 import SearchBar from "@/components/SearchBar";
@@ -6,9 +7,11 @@ import Icon from "@/components/Icon";
 export default function AppHeader({
   subtitle = "Overview",
   showSearch = true,
+  chain = "ethereum",
 }: {
   subtitle?: string;
   showSearch?: boolean;
+  chain?: Chain;
 }) {
   return (
     <header className="app-header">
@@ -19,7 +22,7 @@ export default function AppHeader({
       </div>
       {showSearch && (
         <div className="header-search">
-          <SearchBar compact />
+          <SearchBar key={chain} compact initialChain={chain} />
         </div>
       )}
       <ServiceHealth />

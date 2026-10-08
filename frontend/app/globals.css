@@ -1597,3 +1597,12 @@ textarea.text-input {
 .text-input::placeholder {
   color: #728078;
 }
+
+.chain-fields { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; font-size: 12px; }
+.chain-fields select { max-width: 100%; border: 1px solid var(--border, #dce5df); border-radius: 6px; padding: 6px 10px; background: white; color: #234437; }
+.chain-fields label { color: #52645b; }
+.search-hero .chain-fields label { color: inherit; }
+.app-header:has(.chain-fields) { min-height: 110px; }
+.chain-record { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 480px; overflow: auto; padding: 16px; font-size: 12px; background: #f6f8f6; border-radius: 8px; }
+.chain-card { display: flex; flex-direction: column; gap: 12px; }
+.chain-card .button { align-self: flex-start; }

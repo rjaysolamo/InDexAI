@@ -20,12 +20,17 @@ export default function GuidePage() {
           {
             id: "wallets",
             title: "Start with a wallet or transaction",
-            text: "Paste an Ethereum wallet address or transaction hash into search. A wallet opens its labels and recent activity. Select a transaction to inspect its sender, recipient, value, and execution status.",
+            text: "Choose a chain, then paste an address or transaction identifier into search. New chains use an explicit lookup type. Open the Chains page to check connections and coverage. Ethereum includes labels and fund flow; other chains show their available public details.",
           },
           {
             id: "fund-flow",
             title: "Follow the movement of funds",
-            text: "The transaction page connects its details to decoded fund flow. Each transfer links to its source, destination, and token contract. Open any address to continue exploring; recent activity keeps your trail within reach.",
+            text: "The Ethereum transaction page connects its details to decoded fund flow. Each transfer links to its source, destination, and token contract. Open any address to continue exploring; recent activity keeps your trail within reach.",
+          },
+          {
+            id: "privacy",
+            title: "Understand what each chain makes public",
+            text: "Zcash shielded transfers and Monero transactions conceal information. Public nodes cannot reveal private balances, real senders, recipients or hidden amounts. InDexAI shows those limits explicitly and does not request view keys or seed phrases.",
           },
           {
             id: "notebooks",

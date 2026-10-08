@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useWorkspace } from "@/components/WorkspaceProvider";
 import { NewInvestigation } from "@/components/InvestigationWorkspace";
+import { parseTarget, targetKey } from "@/lib/chains";
 import Icon from "@/components/Icon";
 export default function EntityActions({ target }: { target: string }) {
   const { ready, recordVisit, data, updateCase, storageError } = useWorkspace();
@@ -27,7 +28,9 @@ export default function EntityActions({ target }: { target: string }) {
           className="button secondary"
           onClick={async () => {
             try {
-              await navigator.clipboard.writeText(target);
+              await navigator.clipboard.writeText(
+                parseTarget(target)?.value ?? target,
+              );
               setCopyMessage("Copied to clipboard");
             } catch {
               setCopyMessage(
@@ -80,9 +83,7 @@ export default function EntityActions({ target }: { target: string }) {
                 const c = data.cases.find((item) => item.id === selected);
                 if (
                   c &&
-                  (c.targets.some(
-                    (t) => t.toLowerCase() === target.toLowerCase(),
-                  ) ||
+                  (c.targets.some((t) => targetKey(t) === targetKey(target)) ||
                     updateCase(c.id, { targets: [...c.targets, target] }))
                 )
                   setSaved(c.id);

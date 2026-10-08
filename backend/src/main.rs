@@ -1,4 +1,5 @@
 mod api;
+mod chains;
 mod config;
 mod db;
 mod indexer;
@@ -59,9 +60,12 @@ async fn main() -> Result<()> {
 
     let rpc = rpc::RpcClient::new(config.rpc_url.clone());
 
-    let latest_block = rpc.block_number().await?;
-
-    println!("Latest Ethereum block: {}", latest_block);
+    match rpc.block_number().await {
+        Ok(latest_block) => println!("Latest Ethereum block: {}", latest_block),
+        Err(_) => eprintln!(
+            "Ethereum provider unavailable at startup. Other chains remain available; Ethereum requests can be retried."
+        ),
+    }
 
     let app_state = TransactionApiState { rpc: rpc.clone() };
 
@@ -82,7 +86,8 @@ async fn main() -> Result<()> {
             "/api/v1/indexer/erc20/{from_block}/{to_block}",
             get(scan_erc20),
         )
-        .with_state(app_state);
+        .with_state(app_state)
+        .merge(chains::router(chains::Connections::from_env()));
 
     let address = SocketAddr::from((config.host, config.port));
 

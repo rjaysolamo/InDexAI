@@ -103,18 +103,11 @@ This approach is intended to make tracing suspicious or relevant fund movements 
 
 ## Supported Blockchain Data
 
-The initial focus is on EVM-compatible blockchains.
+Ethereum supports the original transaction, ERC-20 transfer and fund-flow investigation views. Additional public-data connections are available for **Solana, Sui, Aptos, Bitcoin, Zcash and Monero** through the frontend chain selector and Chains page.
 
-The project is starting with Ethereum and is intended to expand to other networks such as:
+Coverage differs by chain. Solana, Sui, Aptos and Bitcoin expose native balances and bounded activity. Zcash requires a configured node and provides address validation and public transaction records. Monero exposes public transaction metadata, not address balances or private transfer paths. Shielded/private data is not inferred or decrypted. Non-Ethereum connections do not yet include fund-flow graphs or multi-hop tracing.
 
-* Ethereum
-* Base
-* BNB Smart Chain
-* Polygon
-* Arbitrum
-* Optimism
-
-Support for additional chains will be added as the indexing and investigation capabilities mature.
+See [frontend setup and chain configuration](frontend/README.md) and [backend environment examples](backend/.env.example).
 
 ## Development Direction
 

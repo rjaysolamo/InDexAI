@@ -9,7 +9,16 @@ import {
   targetHref,
   type Investigation,
 } from "@/components/WorkspaceProvider";
-import { isAddress, isTxHash, shortAddress } from "@/lib/format";
+import { shortAddress } from "@/lib/format";
+import {
+  makeTarget,
+  parseTarget,
+  targetKey,
+  targetLabel,
+  type Chain,
+  type LookupKind,
+} from "@/lib/chains";
+import ChainFields from "@/components/ChainFields";
 
 export function NewInvestigation({
   target = "",
@@ -168,12 +177,19 @@ export function RecentActivity({ limit }: { limit?: number }) {
       {visits.map((v) => (
         <Link href={targetHref(v.target)} className="recent-row" key={v.target}>
           <span className="soft-icon">
-            <Icon name={isAddress(v.target) ? "wallet" : "flow"} size={17} />
+            <Icon
+              name={
+                parseTarget(v.target)?.kind === "address" ? "wallet" : "flow"
+              }
+              size={17}
+            />
           </span>
           <div>
-            <strong>{shortAddress(v.target, 8, 5)}</strong>
+            <strong>
+              {shortAddress(parseTarget(v.target)?.value ?? v.target, 8, 5)}
+            </strong>
             <small>
-              {isAddress(v.target) ? "Wallet address" : "Transaction"} ·{" "}
+              {targetLabel(v.target)} ·{" "}
               {new Date(v.viewedAt).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -191,14 +207,14 @@ export function WorkspaceStats() {
   const addresses = new Set(
     data.cases
       .flatMap((c) => c.targets)
-      .filter(isAddress)
-      .map((t) => t.toLowerCase()),
+      .filter((t) => parseTarget(t)?.kind === "address")
+      .map(targetKey),
   ).size;
   const transactions = new Set(
     data.cases
       .flatMap((c) => c.targets)
-      .filter(isTxHash)
-      .map((t) => t.toLowerCase()),
+      .filter((t) => parseTarget(t)?.kind === "transaction")
+      .map(targetKey),
   ).size;
   return (
     <div className="stats-grid">
@@ -265,17 +281,21 @@ export function CaseDetail({ id }: { id: string }) {
 function CaseEditor({ investigation: c }: { investigation: Investigation }) {
   const { updateCase } = useWorkspace();
   const [target, setTarget] = useState("");
+  const [chain, setChain] = useState<Chain>("ethereum");
+  const [kind, setKind] = useState<LookupKind>("address");
   const [notes, setNotes] = useState(c.notes);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   function addTarget(event: FormEvent) {
     event.preventDefault();
-    const value = target.trim();
-    if (!isAddress(value) && !isTxHash(value)) {
-      setError("Enter a valid Ethereum address or transaction hash.");
+    const value = makeTarget(chain, kind, target);
+    if (!value) {
+      setError(
+        "Enter a valid identifier for the selected chain and lookup type.",
+      );
       return;
     }
-    if (c.targets.some((t) => t.toLowerCase() === value.toLowerCase())) {
+    if (c.targets.some((t) => targetKey(t) === targetKey(value))) {
       setError("This item is already in your investigation.");
       return;
     }
@@ -304,6 +324,12 @@ function CaseEditor({ investigation: c }: { investigation: Investigation }) {
           </div>
           <div className="panel-body">
             <form onSubmit={addTarget}>
+              <ChainFields
+                chain={chain}
+                kind={kind}
+                onChain={setChain}
+                onKind={setKind}
+              />
               <label className="input-label" htmlFor="case-target">
                 Add an address or transaction
               </label>
@@ -316,7 +342,7 @@ function CaseEditor({ investigation: c }: { investigation: Investigation }) {
                     setTarget(e.target.value);
                     setError("");
                   }}
-                  placeholder="0x…"
+                  placeholder="Address or transaction identifier"
                   aria-describedby={error ? "target-error" : undefined}
                   aria-invalid={!!error}
                 />
@@ -342,19 +368,28 @@ function CaseEditor({ investigation: c }: { investigation: Investigation }) {
             ) : (
               <div className="evidence-list">
                 <p className="muted">
-                  Trace initialization validates a target with the service.
+                  Trace initialization is available for Ethereum targets.
                   Multi-hop tracing is not implemented yet.
                 </p>
                 {c.targets.map((t) => (
                   <div key={t}>
                     <div className="evidence-row">
-                      <Icon name={isAddress(t) ? "wallet" : "flow"} />
+                      <Icon
+                        name={
+                          parseTarget(t)?.kind === "address" ? "wallet" : "flow"
+                        }
+                      />
                       <Link href={targetHref(t)}>
-                        <strong>{shortAddress(t)}</strong>
+                        <strong>
+                          {shortAddress(parseTarget(t)?.value ?? t)}
+                        </strong>
+                        <small>{targetLabel(t)} · </small>
                         <small>
-                          {isAddress(t)
+                          {parseTarget(t)?.kind === "address"
                             ? "Explore wallet"
-                            : "Inspect transaction & fund flow"}{" "}
+                            : parseTarget(t)?.chain === "ethereum"
+                              ? "Inspect transaction & fund flow"
+                              : "Inspect public transaction"}{" "}
                           →
                         </small>
                       </Link>
@@ -370,7 +405,9 @@ function CaseEditor({ investigation: c }: { investigation: Investigation }) {
                         <Icon name="close" size={16} />
                       </button>
                     </div>
-                    <InvestigationRun target={t} />
+                    {parseTarget(t)?.chain === "ethereum" && (
+                      <InvestigationRun target={parseTarget(t)!.value} />
+                    )}
                   </div>
                 ))}
               </div>

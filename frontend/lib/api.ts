@@ -1,4 +1,41 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8080";
+import { backendUrl } from "./backend";
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+async function request<T>(path: string, timeout = 60000): Promise<T> {
+  const base = typeof window === "undefined" ? backendUrl() : "/api/backend";
+  let response: Response;
+  try {
+    response = await fetch(`${base}${path}`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(timeout),
+    });
+  } catch {
+    throw new ApiError(
+      "The data service could not be reached. Please try again.",
+      503,
+    );
+  }
+  if (!response.ok) {
+    const error = await response.json().catch(() => null);
+    throw new ApiError(
+      typeof error?.message === "string"
+        ? error.message
+        : `Request failed (${response.status}).`,
+      response.status,
+    );
+  }
+  if (path === "/health") return (await response.text()) as T;
+  return response.json();
+}
 
 export type AddressResponse = {
   address: {
@@ -16,16 +53,7 @@ export type AddressResponse = {
 };
 
 export async function getAddress(address: string): Promise<AddressResponse> {
-  const response = await fetch(`${API_URL}/api/v1/addresses/${address}`, {
-    cache: "no-store",
-    signal: AbortSignal.timeout(12000),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Address request failed: ${response.status}`);
-  }
-
-  return response.json();
+  return request(`/api/v1/addresses/${encodeURIComponent(address)}`);
 }
 
 export type FundFlowNode = {
@@ -57,19 +85,9 @@ export type FundFlowResponse = {
 };
 
 export async function getFundFlow(txHash: string): Promise<FundFlowResponse> {
-  const response = await fetch(
-    `${API_URL}/api/v1/transactions/${txHash}/fund-flow`,
-    {
-      cache: "no-store",
-      signal: AbortSignal.timeout(12000),
-    },
+  return request(
+    `/api/v1/transactions/${encodeURIComponent(txHash)}/fund-flow`,
   );
-
-  if (!response.ok) {
-    throw new Error(`Fund flow request failed: ${response.status}`);
-  }
-
-  return response.json();
 }
 
 export type AddressTransaction = {
@@ -92,19 +110,9 @@ export type AddressTransactionsResponse = {
 export async function getAddressTransactions(
   address: string,
 ): Promise<AddressTransactionsResponse> {
-  const response = await fetch(
-    `${API_URL}/api/v1/addresses/${address}/transactions`,
-    {
-      cache: "no-store",
-      signal: AbortSignal.timeout(12000),
-    },
+  return request(
+    `/api/v1/addresses/${encodeURIComponent(address)}/transactions`,
   );
-
-  if (!response.ok) {
-    throw new Error(`Address transactions request failed: ${response.status}`);
-  }
-
-  return response.json();
 }
 
 export type Transaction = {
@@ -126,14 +134,53 @@ export type TransactionResponse = {
 export async function getTransaction(
   hash: string,
 ): Promise<TransactionResponse> {
-  const response = await fetch(`${API_URL}/api/v1/transactions/${hash}`, {
-    cache: "no-store",
-    signal: AbortSignal.timeout(12000),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Transaction request failed: ${response.status}`);
-  }
-
-  return response.json();
+  return request(`/api/v1/transactions/${encodeURIComponent(hash)}`);
 }
+
+export type TokenTransfer = {
+  chain_id: number;
+  tx_hash: string;
+  token_address: string;
+  from_address: string;
+  to_address: string;
+  amount: string;
+  log_index: number;
+};
+export type LogsResponse = {
+  transaction_hash: string;
+  transfers: TokenTransfer[];
+  message: string;
+};
+export type Erc20Transfer = Omit<TokenTransfer, "chain_id" | "tx_hash"> & {
+  transaction_hash: string;
+  block_number: number;
+  symbol: string;
+  decimals: number;
+  human_amount: string;
+};
+export type ScanResponse = {
+  from_block: number;
+  to_block: number;
+  transfers: Erc20Transfer[];
+  message: string;
+};
+export type BlockResponse = { block_number: number; message: string };
+export type InvestigationResponse = {
+  id: string;
+  target: string;
+  depth: number;
+  message: string;
+};
+export const getHealth = () => request<string>("/health", 5000);
+export const getLogs = (hash: string) =>
+  request<LogsResponse>(
+    `/api/v1/transactions/${encodeURIComponent(hash)}/logs`,
+  );
+export const getBlock = (block: number) =>
+  request<BlockResponse>(`/api/v1/blocks/${block}`);
+export const getInvestigation = (target: string) =>
+  request<InvestigationResponse>(
+    `/api/v1/investigations/${encodeURIComponent(target)}`,
+  );
+export const scanErc20 = (from: number, to: number) =>
+  request<ScanResponse>(`/api/v1/indexer/erc20/${from}/${to}`);

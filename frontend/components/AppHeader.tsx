@@ -1,3 +1,4 @@
+import ServiceHealth from "@/components/ServiceHealth";
 import Link from "next/link";
 import SearchBar from "@/components/SearchBar";
 import Icon from "@/components/Icon";
@@ -21,10 +22,7 @@ export default function AppHeader({
           <SearchBar compact />
         </div>
       )}
-      <div className="network-badge">
-        <span className="ethereum">◆</span> Ethereum{" "}
-        <span className="network-dot" />
-      </div>
+      <ServiceHealth />
     </header>
   );
 }

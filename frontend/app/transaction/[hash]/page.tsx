@@ -1,3 +1,4 @@
+import TransferTable from "@/components/TransferTable";
 import EntityActions from "@/components/EntityActions";
 import LookupError from "@/components/LookupError";
 import { notFound } from "next/navigation";
@@ -6,12 +7,7 @@ import Link from "next/link";
 
 import AppHeader from "@/components/AppHeader";
 import FundFlow from "@/components/FundFlow";
-import {
-  getFundFlow,
-  getTransaction,
-  type FundFlowResponse,
-  type TransactionResponse,
-} from "@/lib/api";
+import { getFundFlow, getLogs, getTransaction } from "@/lib/api";
 import { formatEth, hexToNumber, shortAddress } from "@/lib/format";
 
 type Props = {
@@ -24,20 +20,17 @@ export default async function TransactionPage({ params }: Props) {
   const { hash } = await params;
   if (!isTxHash(hash)) notFound();
 
-  let transactionData: TransactionResponse | null = null;
-  let fundFlowData: FundFlowResponse | null = null;
-  let loadError = false;
-
-  try {
-    [transactionData, fundFlowData] = await Promise.all([
-      getTransaction(hash),
-      getFundFlow(hash),
-    ]);
-  } catch {
-    loadError = true;
-  }
-
-  if (loadError || !transactionData || !fundFlowData) {
+  const [transactionResult, flowResult, logsResult] = await Promise.allSettled([
+    getTransaction(hash),
+    getFundFlow(hash),
+    getLogs(hash),
+  ]);
+  const transactionData =
+    transactionResult.status === "fulfilled" ? transactionResult.value : null;
+  const fundFlowData =
+    flowResult.status === "fulfilled" ? flowResult.value : null;
+  const logsData = logsResult.status === "fulfilled" ? logsResult.value : null;
+  if (!transactionData) {
     return (
       <main className="detail-page">
         <AppHeader />
@@ -144,14 +137,44 @@ export default async function TransactionPage({ params }: Props) {
           </div>
         </section>
 
+        <section className="panel mt-8">
+          <div className="panel-heading">
+            <h2>Decoded ERC-20 transfers</h2>
+          </div>
+          <div className="panel-body">
+            {logsData ? (
+              <TransferTable transfers={logsData.transfers} />
+            ) : (
+              <p role="status" className="muted">
+                {pending
+                  ? "Transfers are available after the transaction is mined."
+                  : "Transfer logs could not be loaded."}
+                {!pending && (
+                  <a className="text-link ml-2" href={`/transaction/${hash}`}>
+                    Try again
+                  </a>
+                )}
+              </p>
+            )}
+          </div>
+        </section>
+
         <div className="mt-8">
-          {fundFlowData.fund_flow ? (
+          {fundFlowData?.fund_flow ? (
             <FundFlow flow={fundFlowData.fund_flow} />
           ) : (
             <section className="rounded-md border border-gray-200 px-5 py-6">
               <h2 className="text-sm font-semibold">Fund flow</h2>
               <p className="mt-2 text-sm text-gray-500">
-                {fundFlowData.message}
+                {fundFlowData?.message ??
+                  (pending
+                    ? "Fund flow is available after the transaction is mined."
+                    : "Fund flow could not be loaded.")}
+                {!pending && !fundFlowData && (
+                  <a className="text-link ml-2" href={`/transaction/${hash}`}>
+                    Try again
+                  </a>
+                )}
               </p>
             </section>
           )}

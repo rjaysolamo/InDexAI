@@ -20,16 +20,22 @@ pub struct TransactionResponse {
 pub async fn get_transaction_handler(
     State(state): State<TransactionApiState>,
     Path(hash): Path<String>,
-) -> Json<TransactionResponse> {
+) -> Result<Json<TransactionResponse>, super::error::ApiError> {
     match get_transaction(&state.rpc, &hash).await {
-        Ok(transaction) => Json(TransactionResponse {
+        Ok(transaction) => Ok(Json(TransactionResponse {
             transaction: Some(transaction),
-            message: "Transaction lookup successful.".to_string(),
-        }),
-
-        Err(error) => Json(TransactionResponse {
-            transaction: None,
-            message: error.to_string(),
-        }),
+            message: "Transaction lookup successful.".into(),
+        })),
+        Err(error)
+            if error
+                .downcast_ref::<crate::indexer::transactions::TransactionNotFound>()
+                .is_some() =>
+        {
+            Ok(Json(TransactionResponse {
+                transaction: None,
+                message: "Transaction not found.".into(),
+            }))
+        }
+        Err(error) => Err(error.into()),
     }
 }

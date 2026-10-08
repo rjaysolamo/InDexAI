@@ -1,4 +1,5 @@
 "use client";
+import InvestigationRun from "@/components/InvestigationRun";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useRef, useState, type FormEvent } from "react";
@@ -340,29 +341,36 @@ function CaseEditor({ investigation: c }: { investigation: Investigation }) {
               </div>
             ) : (
               <div className="evidence-list">
+                <p className="muted">
+                  Trace initialization validates a target with the service.
+                  Multi-hop tracing is not implemented yet.
+                </p>
                 {c.targets.map((t) => (
-                  <div className="evidence-row" key={t}>
-                    <Icon name={isAddress(t) ? "wallet" : "flow"} />
-                    <Link href={targetHref(t)}>
-                      <strong>{shortAddress(t)}</strong>
-                      <small>
-                        {isAddress(t)
-                          ? "Explore wallet"
-                          : "Inspect transaction & fund flow"}{" "}
-                        →
-                      </small>
-                    </Link>
-                    <button
-                      className="icon-button"
-                      aria-label={`Remove ${t} from investigation`}
-                      onClick={() =>
-                        updateCase(c.id, {
-                          targets: c.targets.filter((item) => item !== t),
-                        })
-                      }
-                    >
-                      <Icon name="close" size={16} />
-                    </button>
+                  <div key={t}>
+                    <div className="evidence-row">
+                      <Icon name={isAddress(t) ? "wallet" : "flow"} />
+                      <Link href={targetHref(t)}>
+                        <strong>{shortAddress(t)}</strong>
+                        <small>
+                          {isAddress(t)
+                            ? "Explore wallet"
+                            : "Inspect transaction & fund flow"}{" "}
+                          →
+                        </small>
+                      </Link>
+                      <button
+                        className="icon-button"
+                        aria-label={`Remove ${t} from investigation`}
+                        onClick={() =>
+                          updateCase(c.id, {
+                            targets: c.targets.filter((item) => item !== t),
+                          })
+                        }
+                      >
+                        <Icon name="close" size={16} />
+                      </button>
+                    </div>
+                    <InvestigationRun target={t} />
                   </div>
                 ))}
               </div>

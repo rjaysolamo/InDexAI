@@ -35,21 +35,20 @@ struct Erc20ScanResponse {
 async fn scan_erc20(
     State(state): State<TransactionApiState>,
     Path((from_block, to_block)): Path<(u64, u64)>,
-) -> Json<Erc20ScanResponse> {
-    match scan_transfer_logs(&state.rpc, from_block, to_block).await {
-        Ok(transfers) => Json(Erc20ScanResponse {
-            from_block,
-            to_block,
-            transfers,
-            message: "ERC-20 Transfer scan completed.".to_string(),
-        }),
-        Err(error) => Json(Erc20ScanResponse {
-            from_block,
-            to_block,
-            transfers: Vec::new(),
-            message: error.to_string(),
-        }),
+) -> Result<Json<Erc20ScanResponse>, api::error::ApiError> {
+    if from_block > to_block || to_block - from_block >= 100 {
+        return Err(api::error::ApiError(
+            axum::http::StatusCode::BAD_REQUEST,
+            "Choose an ordered range of at most 100 blocks.".into(),
+        ));
     }
+    let transfers = scan_transfer_logs(&state.rpc, from_block, to_block).await?;
+    Ok(Json(Erc20ScanResponse {
+        from_block,
+        to_block,
+        transfers,
+        message: "ERC-20 Transfer scan completed.".into(),
+    }))
 }
 
 #[tokio::main]

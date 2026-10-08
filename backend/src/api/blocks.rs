@@ -8,17 +8,14 @@ pub struct BlockResponse {
     pub message: String,
 }
 
-pub async fn get_block(Path(block_number): Path<u64>) -> Json<BlockResponse> {
-    let result = index_block(block_number).await;
-
-    match result {
-        Ok(number) => Json(BlockResponse {
-            block_number: number,
-            message: "Block accepted for indexing.".to_string(),
-        }),
-        Err(error) => Json(BlockResponse {
-            block_number,
-            message: error.to_string(),
-        }),
-    }
+pub async fn get_block(
+    Path(block_number): Path<u64>,
+) -> Result<Json<BlockResponse>, super::error::ApiError> {
+    let number = index_block(block_number).await.map_err(|error| {
+        super::error::ApiError(axum::http::StatusCode::BAD_REQUEST, error.to_string())
+    })?;
+    Ok(Json(BlockResponse {
+        block_number: number,
+        message: "Block request validated. Block indexing is not implemented yet.".into(),
+    }))
 }

@@ -11,17 +11,15 @@ pub struct InvestigationResponse {
     pub message: String,
 }
 
-pub async fn get_investigation(Path(id): Path<String>) -> Json<InvestigationResponse> {
+pub async fn get_investigation(
+    Path(id): Path<String>,
+) -> Result<Json<InvestigationResponse>, super::error::ApiError> {
     let target = id.clone();
     let depth = 3;
-
-    let _ = trace_wallet(&target, depth).await;
-    let _ = trace_funds(&target, depth, None).await;
-
-    Json(InvestigationResponse {
-        id,
-        target,
-        depth,
-        message: "Investigation initialized.".to_string(),
-    })
+    trace_wallet(&target, depth).await?;
+    trace_funds(&target, depth, None).await?;
+    Ok(Json(InvestigationResponse {
+        id, target, depth,
+        message: "Investigation initialized. Multi-hop tracing is not implemented yet; no trace results have been generated.".into(),
+    }))
 }

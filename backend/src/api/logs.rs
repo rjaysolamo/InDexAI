@@ -26,42 +26,23 @@ pub struct FundFlowResponse {
 pub async fn get_logs(
     State(state): State<TransactionApiState>,
     Path(tx_hash): Path<String>,
-) -> Json<LogsResponse> {
-    match index_logs(&state.rpc, &tx_hash).await {
-        Ok(transfers) => Json(LogsResponse {
-            transaction_hash: tx_hash,
-            transfers,
-            message: "ERC-20 Transfer events decoded.".to_string(),
-        }),
-
-        Err(error) => Json(LogsResponse {
-            transaction_hash: tx_hash,
-            transfers: Vec::new(),
-            message: error.to_string(),
-        }),
-    }
+) -> Result<Json<LogsResponse>, super::error::ApiError> {
+    let transfers = index_logs(&state.rpc, &tx_hash).await?;
+    Ok(Json(LogsResponse {
+        transaction_hash: tx_hash,
+        transfers,
+        message: "ERC-20 Transfer events decoded.".into(),
+    }))
 }
 
 pub async fn get_fund_flow(
     State(state): State<TransactionApiState>,
     Path(tx_hash): Path<String>,
-) -> Json<FundFlowResponse> {
-    match index_logs(&state.rpc, &tx_hash).await {
-        Ok(transfers) => match build_fund_flow(&state.rpc, &tx_hash, &transfers).await {
-            Ok(fund_flow) => Json(FundFlowResponse {
-                fund_flow: Some(fund_flow),
-                message: "Fund flow built successfully.".to_string(),
-            }),
-
-            Err(error) => Json(FundFlowResponse {
-                fund_flow: None,
-                message: error.to_string(),
-            }),
-        },
-
-        Err(error) => Json(FundFlowResponse {
-            fund_flow: None,
-            message: error.to_string(),
-        }),
-    }
+) -> Result<Json<FundFlowResponse>, super::error::ApiError> {
+    let transfers = index_logs(&state.rpc, &tx_hash).await?;
+    let fund_flow = build_fund_flow(&state.rpc, &tx_hash, &transfers).await?;
+    Ok(Json(FundFlowResponse {
+        fund_flow: Some(fund_flow),
+        message: "Fund flow built successfully.".into(),
+    }))
 }

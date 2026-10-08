@@ -12,6 +12,7 @@ const links: { href: string; title: string; icon: IconName }[] = [
   { href: "/", title: "Overview", icon: "grid" },
   { href: "/investigations", title: "Investigations", icon: "folder" },
   { href: "/activity", title: "Recent activity", icon: "clock" },
+  { href: "/indexer", title: "Indexer", icon: "flow" },
 ];
 function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();

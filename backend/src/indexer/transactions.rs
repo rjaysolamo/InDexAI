@@ -9,7 +9,7 @@ pub async fn get_transaction(rpc: &RpcClient, tx_hash: &str) -> Result<Transacti
         .await?;
 
     if transaction.is_null() {
-        anyhow::bail!("transaction not found");
+        return Err(TransactionNotFound.into());
     }
 
     let hash = transaction
@@ -77,3 +77,12 @@ pub async fn get_transaction(rpc: &RpcClient, tx_hash: &str) -> Result<Transacti
 fn parse_hex_u64(value: &str) -> Result<u64> {
     u64::from_str_radix(value.trim_start_matches("0x"), 16).context("invalid hexadecimal number")
 }
+
+#[derive(Debug)]
+pub struct TransactionNotFound;
+impl std::fmt::Display for TransactionNotFound {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "transaction not found")
+    }
+}
+impl std::error::Error for TransactionNotFound {}

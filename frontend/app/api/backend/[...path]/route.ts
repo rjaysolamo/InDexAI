@@ -1,3 +1,4 @@
+import { isChain, validIdentifier } from "@/lib/chains";
 import { backendUrl } from "@/lib/backend";
 
 const allowed =
@@ -9,7 +10,19 @@ export async function GET(
 ) {
   const { path } = await params;
   const endpoint = path.join("/");
-  if (!allowed.test(endpoint)) {
+  const chain = path[3] ?? "";
+  const isChainRoute =
+    endpoint === "api/v1/chains" ||
+    (path[0] === "api" &&
+      path[1] === "v1" &&
+      path[2] === "chains" &&
+      isChain(chain) &&
+      path[3] !== "ethereum" &&
+      ((path.length === 5 && path[4] === "status") ||
+        (path.length === 6 &&
+          (path[4] === "address" || path[4] === "transaction") &&
+          validIdentifier(chain, path[4], path[5]))));
+  if (!allowed.test(endpoint) && !isChainRoute) {
     return Response.json({ message: "Unknown API endpoint." }, { status: 404 });
   }
   try {

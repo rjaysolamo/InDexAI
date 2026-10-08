@@ -12,7 +12,8 @@ const links: { href: string; title: string; icon: IconName }[] = [
   { href: "/", title: "Overview", icon: "grid" },
   { href: "/investigations", title: "Investigations", icon: "folder" },
   { href: "/activity", title: "Recent activity", icon: "clock" },
-  { href: "/indexer", title: "Indexer", icon: "flow" },
+  { href: "/indexer", title: "Ethereum indexer", icon: "flow" },
+  { href: "/chains", title: "Chains", icon: "globe" },
 ];
 function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();
@@ -117,7 +118,7 @@ function Shell({ children }: { children: ReactNode }) {
             on-chain.
           </span>
           <span>
-            Ethereum <span className="footer-dot">·</span> Early access
+            7 chains <span className="footer-dot">·</span> Early access
           </span>
         </footer>
       </div>

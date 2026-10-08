@@ -5,6 +5,7 @@ use axum::{
 };
 use serde_json::json;
 
+#[derive(Debug)]
 pub struct ApiError(pub StatusCode, pub String);
 
 impl From<anyhow::Error> for ApiError {

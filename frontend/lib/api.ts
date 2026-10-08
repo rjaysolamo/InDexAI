@@ -184,3 +184,30 @@ export const getInvestigation = (target: string) =>
   );
 export const scanErc20 = (from: number, to: number) =>
   request<ScanResponse>(`/api/v1/indexer/erc20/${from}/${to}`);
+
+export type ChainConnection = {
+  chain: import("./chains").Chain;
+  name: string;
+  configured: boolean;
+  notice: string;
+};
+export type ChainStatus = { chain: string; status: string; position: string };
+export type ChainLookup = {
+  chain: string;
+  kind: string;
+  target: string;
+  fields: { label: string; value: string }[];
+  transactions: { hash: string; status: string; position: string }[];
+  notices: string[];
+  public_data: string;
+};
+export const getChains = () => request<ChainConnection[]>("/api/v1/chains");
+export const getChainStatus = (chain: string) =>
+  request<ChainStatus>(
+    `/api/v1/chains/${encodeURIComponent(chain)}/status`,
+    15000,
+  );
+export const getChainLookup = (chain: string, kind: string, target: string) =>
+  request<ChainLookup>(
+    `/api/v1/chains/${encodeURIComponent(chain)}/${encodeURIComponent(kind)}/${encodeURIComponent(target)}`,
+  );

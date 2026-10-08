@@ -46,7 +46,7 @@ export default function Home() {
             <SearchBar />
             <div className="search-hints">
               <span>
-                <Icon name="shield" size={13} /> Ethereum mainnet
+                <Icon name="shield" size={13} /> 7 chains supported
               </span>
               <span>Wallet addresses & transaction hashes</span>
             </div>

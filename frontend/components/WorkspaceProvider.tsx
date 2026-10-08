@@ -7,7 +7,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { isAddress, isTxHash } from "@/lib/format";
+import { parseTarget, targetKey } from "@/lib/chains";
+export { targetHref } from "@/lib/chains";
 
 export type Investigation = {
   id: string;
@@ -21,7 +22,7 @@ type Data = { cases: Investigation[]; visits: Visit[] };
 const empty: Data = { cases: [], visits: [] };
 const key = "indexai.workspace.v1";
 const validTarget = (value: unknown): value is string =>
-  typeof value === "string" && (isAddress(value) || isTxHash(value));
+  typeof value === "string" && parseTarget(value) !== null;
 const validDate = (value: unknown): value is string =>
   typeof value === "string" && Number.isFinite(Date.parse(value));
 function readData(): Data {
@@ -141,7 +142,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             visits: [
               { target, viewedAt: new Date().toISOString() },
               ...data.visits.filter(
-                (v) => v.target.toLowerCase() !== target.toLowerCase(),
+                (v) => targetKey(v.target) !== targetKey(target),
               ),
             ].slice(0, 30),
           });
@@ -156,7 +157,4 @@ export function useWorkspace() {
   const context = useContext(Context);
   if (!context) throw new Error("WorkspaceProvider is required");
   return context;
-}
-export function targetHref(target: string) {
-  return `/${isAddress(target) ? "address" : "transaction"}/${target}`;
 }

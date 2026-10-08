@@ -24,7 +24,7 @@ export default function ServiceHealth() {
   }, []);
   return (
     <span className="network-badge" role="status">
-      <span className="ethereum">◆</span> Ethereum · {status}
+      <span className="ethereum">◆</span> Data service · {status}
     </span>
   );
 }

@@ -1,33 +1,45 @@
 "use client";
 import { useId, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { isAddress, isTxHash } from "@/lib/format";
+import {
+  makeTarget,
+  targetHref,
+  CHAIN_NAMES,
+  type Chain,
+  type LookupKind,
+} from "@/lib/chains";
+import ChainFields from "@/components/ChainFields";
 import Icon from "@/components/Icon";
 
 export default function SearchBar({
   initialValue = "",
   compact = false,
   autofocus = false,
+  initialChain = "ethereum",
 }: {
   initialValue?: string;
   compact?: boolean;
   autofocus?: boolean;
+  initialChain?: Chain;
 }) {
   const router = useRouter();
   const id = useId();
+  const [chain, setChain] = useState<Chain>(initialChain);
+  const [kind, setKind] = useState<LookupKind>("address");
   const [value, setValue] = useState(initialValue);
   const [error, setError] = useState("");
   function submit(event: FormEvent) {
     event.preventDefault();
     const query = value.trim();
-    if (!isAddress(query) && !isTxHash(query)) {
+    const target = makeTarget(chain, kind, query);
+    if (!target) {
       setError(
-        "Enter a valid Ethereum address (0x + 40 characters) or transaction hash (0x + 64 characters).",
+        `Enter a valid ${CHAIN_NAMES[chain]} ${chain === "ethereum" ? "address or transaction hash" : kind === "transaction" && chain === "solana" ? "transaction signature" : kind}.`,
       );
       return;
     }
     setError("");
-    router.push(`/${isAddress(query) ? "address" : "transaction"}/${query}`);
+    router.push(targetHref(target));
   }
   return (
     <form
@@ -35,6 +47,18 @@ export default function SearchBar({
       className={`search-form ${compact ? "compact" : ""}`}
       role="search"
     >
+      <ChainFields
+        chain={chain}
+        kind={kind}
+        onChain={(c) => {
+          setChain(c);
+          setError("");
+        }}
+        onKind={(k) => {
+          setKind(k);
+          setError("");
+        }}
+      />
       <div className="search-input-wrap">
         <Icon name="search" size={compact ? 17 : 21} />
         <input

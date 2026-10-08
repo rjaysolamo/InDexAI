@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:chains": "node --experimental-strip-types --test tests/chains.test.mjs"
   },
   "dependencies": {
     "next": "16.3.7",

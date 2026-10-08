@@ -1,3 +1,7 @@
+import EntityActions from "@/components/EntityActions";
+import LookupError from "@/components/LookupError";
+import { notFound } from "next/navigation";
+import { isTxHash } from "@/lib/format";
 import Link from "next/link";
 
 import AppHeader from "@/components/AppHeader";
@@ -8,11 +12,7 @@ import {
   type FundFlowResponse,
   type TransactionResponse,
 } from "@/lib/api";
-import {
-  formatEth,
-  hexToNumber,
-  shortAddress,
-} from "@/lib/format";
+import { formatEth, hexToNumber, shortAddress } from "@/lib/format";
 
 type Props = {
   params: Promise<{
@@ -22,6 +22,7 @@ type Props = {
 
 export default async function TransactionPage({ params }: Props) {
   const { hash } = await params;
+  if (!isTxHash(hash)) notFound();
 
   let transactionData: TransactionResponse | null = null;
   let fundFlowData: FundFlowResponse | null = null;
@@ -38,13 +39,11 @@ export default async function TransactionPage({ params }: Props) {
 
   if (loadError || !transactionData || !fundFlowData) {
     return (
-      <main className="min-h-screen bg-white text-gray-900">
+      <main className="detail-page">
         <AppHeader />
-        <div className="mx-auto max-w-6xl px-6 py-16">
-          <h1 className="text-lg font-semibold">Unable to load transaction</h1>
-          <p className="mt-2 text-sm text-gray-500">
-            Make sure the InDexAI backend is running on the configured API URL.
-          </p>
+        <div className="page-content">
+          <EntityActions target={hash} />
+          <LookupError type="transaction" target={hash} />
         </div>
       </main>
     );
@@ -54,7 +53,7 @@ export default async function TransactionPage({ params }: Props) {
 
   if (!transaction) {
     return (
-      <main className="min-h-screen bg-white text-gray-900">
+      <main className="detail-page">
         <AppHeader subtitle="Transaction investigation" />
         <div className="mx-auto max-w-6xl px-6 py-16">
           <h1 className="text-lg font-semibold">Transaction not found</h1>
@@ -70,12 +69,14 @@ export default async function TransactionPage({ params }: Props) {
   }
 
   const success = transaction.status === 1;
+  const pending = transaction.status === null;
 
   return (
-    <main className="min-h-screen bg-white text-gray-900">
+    <main className="detail-page">
       <AppHeader subtitle="Transaction investigation" />
 
-      <div className="mx-auto max-w-6xl px-6 py-8">
+      <div className="page-content">
+        <EntityActions target={hash} />
         <div className="mb-8">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
@@ -84,12 +85,14 @@ export default async function TransactionPage({ params }: Props) {
             <span
               className={[
                 "rounded px-2 py-0.5 text-xs",
-                success
-                  ? "bg-emerald-50 text-emerald-700"
-                  : "bg-red-50 text-red-700",
+                pending
+                  ? "bg-gray-100 text-gray-600"
+                  : success
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "bg-red-50 text-red-700",
               ].join(" ")}
             >
-              {success ? "Success" : "Failed"}
+              {pending ? "Pending" : success ? "Success" : "Failed"}
             </span>
             <span className="text-xs text-gray-400">
               Block {transaction.block_number ?? "Pending"}

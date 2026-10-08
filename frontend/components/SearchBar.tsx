@@ -1,79 +1,79 @@
 "use client";
-
-import { FormEvent, useState } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-
 import { isAddress, isTxHash } from "@/lib/format";
-
-type Props = {
-  initialValue?: string;
-  compact?: boolean;
-  autofocus?: boolean;
-};
+import Icon from "@/components/Icon";
 
 export default function SearchBar({
   initialValue = "",
   compact = false,
   autofocus = false,
-}: Props) {
+}: {
+  initialValue?: string;
+  compact?: boolean;
+  autofocus?: boolean;
+}) {
   const router = useRouter();
+  const id = useId();
   const [value, setValue] = useState(initialValue);
-  const [error, setError] = useState<string | null>(null);
-
-  function onSubmit(event: FormEvent) {
+  const [error, setError] = useState("");
+  function submit(event: FormEvent) {
     event.preventDefault();
-
     const query = value.trim();
-    if (!query) {
-      setError("Enter an address or transaction hash.");
+    if (!isAddress(query) && !isTxHash(query)) {
+      setError(
+        "Enter a valid Ethereum address (0x + 40 characters) or transaction hash (0x + 64 characters).",
+      );
       return;
     }
-
-    if (isAddress(query)) {
-      setError(null);
-      router.push(`/address/${query}`);
-      return;
-    }
-
-    if (isTxHash(query)) {
-      setError(null);
-      router.push(`/transaction/${query}`);
-      return;
-    }
-
-    setError("Use a valid 0x address (40 hex) or transaction hash (64 hex).");
+    setError("");
+    router.push(`/${isAddress(query) ? "address" : "transaction"}/${query}`);
   }
-
   return (
-    <form onSubmit={onSubmit} className="w-full">
-      <div className="flex gap-2">
+    <form
+      onSubmit={submit}
+      className={`search-form ${compact ? "compact" : ""}`}
+      role="search"
+    >
+      <div className="search-input-wrap">
+        <Icon name="search" size={compact ? 17 : 21} />
         <input
+          id={id}
+          aria-label="Search wallet address or transaction hash"
+          aria-invalid={!!error}
+          aria-describedby={error ? `${id}-error` : undefined}
           value={value}
           autoFocus={autofocus}
+          autoComplete="off"
+          spellCheck={false}
           onChange={(event) => {
             setValue(event.target.value);
-            if (error) setError(null);
+            setError("");
           }}
-          placeholder="Search address or transaction hash (0x…)"
-          className={[
-            "w-full rounded-md border border-gray-300 bg-white px-3 font-mono text-sm outline-none focus:border-gray-500",
-            compact ? "h-9" : "h-11",
-          ].join(" ")}
+          placeholder={
+            compact
+              ? "Search address or transaction…"
+              : "Enter a wallet address or transaction hash…"
+          }
         />
-
         <button
           type="submit"
-          className={[
-            "shrink-0 rounded-md bg-gray-900 px-4 text-sm font-medium text-white hover:bg-gray-800",
-            compact ? "h-9" : "h-11",
-          ].join(" ")}
+          className={compact ? "icon-button" : "button primary"}
+          aria-label={compact ? "Search" : undefined}
         >
-          Investigate
+          {compact ? (
+            <Icon name="arrow" size={17} />
+          ) : (
+            <>
+              Investigate <Icon name="arrow" size={17} />
+            </>
+          )}
         </button>
       </div>
-
       {error && (
-        <p className="mt-2 text-xs text-red-600">{error}</p>
+        <p id={`${id}-error`} role="alert" className="field-error">
+          {error}
+        </p>
       )}
     </form>
   );

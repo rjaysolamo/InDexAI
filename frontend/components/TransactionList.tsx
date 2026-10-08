@@ -62,6 +62,7 @@ export default function TransactionList({
               key={option}
               type="button"
               onClick={() => setFilter(option)}
+              aria-pressed={filter === option}
               className={[
                 "rounded-md px-2.5 py-1 text-xs font-medium transition",
                 filter === option
@@ -81,7 +82,7 @@ export default function TransactionList({
           transactions found.
         </div>
       ) : (
-        <div className="overflow-hidden rounded-md border border-gray-200">
+        <div className="overflow-x-auto rounded-md border border-gray-200">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-gray-200 bg-gray-50 text-xs text-gray-500">
               <tr>

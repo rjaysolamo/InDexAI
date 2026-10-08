@@ -1,5 +1,4 @@
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8080";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8080";
 
 export type AddressResponse = {
   address: {
@@ -16,20 +15,14 @@ export type AddressResponse = {
   message: string;
 };
 
-export async function getAddress(
-  address: string,
-): Promise<AddressResponse> {
-  const response = await fetch(
-    `${API_URL}/api/v1/addresses/${address}`,
-    {
-      cache: "no-store",
-    },
-  );
+export async function getAddress(address: string): Promise<AddressResponse> {
+  const response = await fetch(`${API_URL}/api/v1/addresses/${address}`, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(12000),
+  });
 
   if (!response.ok) {
-    throw new Error(
-      `Address request failed: ${response.status}`,
-    );
+    throw new Error(`Address request failed: ${response.status}`);
   }
 
   return response.json();
@@ -63,20 +56,17 @@ export type FundFlowResponse = {
   message: string;
 };
 
-export async function getFundFlow(
-  txHash: string,
-): Promise<FundFlowResponse> {
+export async function getFundFlow(txHash: string): Promise<FundFlowResponse> {
   const response = await fetch(
     `${API_URL}/api/v1/transactions/${txHash}/fund-flow`,
     {
       cache: "no-store",
+      signal: AbortSignal.timeout(12000),
     },
   );
 
   if (!response.ok) {
-    throw new Error(
-      `Fund flow request failed: ${response.status}`,
-    );
+    throw new Error(`Fund flow request failed: ${response.status}`);
   }
 
   return response.json();
@@ -106,13 +96,12 @@ export async function getAddressTransactions(
     `${API_URL}/api/v1/addresses/${address}/transactions`,
     {
       cache: "no-store",
+      signal: AbortSignal.timeout(12000),
     },
   );
 
   if (!response.ok) {
-    throw new Error(
-      `Address transactions request failed: ${response.status}`,
-    );
+    throw new Error(`Address transactions request failed: ${response.status}`);
   }
 
   return response.json();
@@ -137,17 +126,13 @@ export type TransactionResponse = {
 export async function getTransaction(
   hash: string,
 ): Promise<TransactionResponse> {
-  const response = await fetch(
-    `${API_URL}/api/v1/transactions/${hash}`,
-    {
-      cache: "no-store",
-    },
-  );
+  const response = await fetch(`${API_URL}/api/v1/transactions/${hash}`, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(12000),
+  });
 
   if (!response.ok) {
-    throw new Error(
-      `Transaction request failed: ${response.status}`,
-    );
+    throw new Error(`Transaction request failed: ${response.status}`);
   }
 
   return response.json();

@@ -1,29 +1,29 @@
 import Link from "next/link";
-
 import SearchBar from "@/components/SearchBar";
-
-type Props = {
-  subtitle?: string;
-  showSearch?: boolean;
-};
+import Icon from "@/components/Icon";
 
 export default function AppHeader({
-  subtitle = "Blockchain investigation",
+  subtitle = "Overview",
   showSearch = true,
-}: Props) {
+}: {
+  subtitle?: string;
+  showSearch?: boolean;
+}) {
   return (
-    <header className="border-b border-gray-200 bg-white">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <Link href="/" className="shrink-0">
-          <div className="text-lg font-semibold tracking-tight">InDexAI</div>
-          <div className="mt-0.5 text-xs text-gray-500">{subtitle}</div>
-        </Link>
-
-        {showSearch && (
-          <div className="w-full max-w-xl">
-            <SearchBar compact />
-          </div>
-        )}
+    <header className="app-header">
+      <div className="breadcrumbs">
+        <Link href="/">Workspace</Link>
+        <Icon name="chevron" size={13} />
+        <span>{subtitle}</span>
+      </div>
+      {showSearch && (
+        <div className="header-search">
+          <SearchBar compact />
+        </div>
+      )}
+      <div className="network-badge">
+        <span className="ethereum">◆</span> Ethereum{" "}
+        <span className="network-dot" />
       </div>
     </header>
   );

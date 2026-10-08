@@ -1,3 +1,7 @@
+import EntityActions from "@/components/EntityActions";
+import LookupError from "@/components/LookupError";
+import { notFound } from "next/navigation";
+import { isAddress } from "@/lib/format";
 import AppHeader from "@/components/AppHeader";
 import TransactionList from "@/components/TransactionList";
 import {
@@ -15,6 +19,7 @@ type Props = {
 
 export default async function AddressPage({ params }: Props) {
   const { address } = await params;
+  if (!isAddress(address)) notFound();
 
   let data: AddressResponse | null = null;
   let transactionData: AddressTransactionsResponse | null = null;
@@ -31,13 +36,11 @@ export default async function AddressPage({ params }: Props) {
 
   if (loadError || !data || !transactionData) {
     return (
-      <main className="min-h-screen bg-white text-gray-900">
+      <main className="detail-page">
         <AppHeader />
-        <div className="mx-auto max-w-6xl px-6 py-16">
-          <h1 className="text-lg font-semibold">Unable to load address</h1>
-          <p className="mt-2 text-sm text-gray-500">
-            Make sure the InDexAI backend is running on the configured API URL.
-          </p>
+        <div className="page-content">
+          <EntityActions target={address} />
+          <LookupError type="address" target={address} />
         </div>
       </main>
     );
@@ -45,15 +48,14 @@ export default async function AddressPage({ params }: Props) {
 
   const label = data.label?.label ?? data.address.label;
   const chain =
-    data.address.chain_id === 1
-      ? "Ethereum"
-      : `Chain ${data.address.chain_id}`;
+    data.address.chain_id === 1 ? "Ethereum" : `Chain ${data.address.chain_id}`;
 
   return (
-    <main className="min-h-screen bg-white text-gray-900">
+    <main className="detail-page">
       <AppHeader subtitle="Address investigation" />
 
-      <div className="mx-auto max-w-6xl px-6 py-8">
+      <div className="page-content">
+        <EntityActions target={address} />
         <div className="mb-8">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
